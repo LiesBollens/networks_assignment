@@ -1,20 +1,16 @@
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
-import sun.nio.cs.ext.MacArabic;
-
-import com.sun.org.apache.xpath.internal.axes.SelfIteratorNoPredicate;
 
 
 
 
 public class DHCP_Client {
-	
+
 	private InetAddress ipAddress; 
 	private int port; 
 	private DatagramPacket DHCP_discover_packet;
@@ -25,11 +21,11 @@ public class DHCP_Client {
 	private byte[] MAC;
 	private DatagramSocket client_connection;
 	private static byte[] MAGIC_COOKIE = {(byte) 99, (byte) -126, (byte) 83, (byte) 99};
-	
+
 	private byte DHCPMessageType;
 	private InetAddress serverIdentifierAddress;
 	private int ipAddressLeaseTime;
-	
+
 	public DHCP_Client(String ipAddress, int port) throws Exception {
 		this.ipAddress = InetAddress.getByName(ipAddress);
 		this.port = port; 
@@ -37,42 +33,11 @@ public class DHCP_Client {
 		byte[] chaddr_2 = new byte[10];
 		Arrays.fill( chaddr_2, (byte) 0 );
 		this.MAC = array_concatenate(chaddr_1, chaddr_2);
-	
+
 	}
-	
-	void send_packet(byte[] packet) throws IOException {
-		if (this.client_connection == null){
-			return ;
-		}
-		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, this.ipAddress, this.port);
-		client_connection.send(sendPacket);
-	}
-	
-	DatagramPacket receive_packet() throws IOException{
-		if (this.client_connection == null){
-			return null;
-		}
-		byte[] receiveData = new byte[576];
-		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		this.client_connection.receive(receivePacket);
-		String returnString = Arrays.toString(receivePacket.getData());
-		System.out.println("From server: " + returnString);
-		return receivePacket;
-	}
-	
-//	public String send_DHCP_discover() throws Exception{
-//		DHCP_discover_packet = send_packet(DHCP_discover());
-//		byte[] DHCPData = DHCP_discover_packet.getData();
-//		receivedIpAddress = Arrays.copyOfRange(DHCPData, 16, 20);
-//		serverIpAdress = Arrays.copyOfRange(DHCPData, 20, 24);
-//		DHCPReceivedAddress = InetAddress.getByAddress(receivedIpAddress);
-//		DHCPServerAddress = InetAddress.getByAddress(serverIpAdress);
-//		System.out.println("Server Address: " + DHCPServerAddress.getHostAddress());
-//		return DHCPReceivedAddress.getHostAddress();  
-//		
-//	}
-	
-	public void execute_DHCP() throws Exception {
+
+
+	public InetAddress execute_DHCP() throws Exception {
 		this.client_connection = new DatagramSocket();
 		send_packet(DHCP_discover());
 		while (! is_valid_mac(DHCP_discover_packet)){
@@ -82,17 +47,50 @@ public class DHCP_Client {
 		send_packet(DHCP_request());
 		DatagramPacket DHCP_ACK_packet = receive_packet();
 		parse_DHCP_offer(DHCP_ACK_packet);
+		if (DHCPMessageType != (byte) 5){
+			if (DHCPMessageType == (byte) 6) {
+				client_connection.close();
+				DHCP_Client client = new DHCP_Client(ipAddress.getHostAddress(), this.port);
+				return client.execute_DHCP();
+			}
+		}
+
 		client_connection.close();
+		return DHCPReceivedAddress;
 	}
 	
+	public void release_DHCP(){
+		if (ipAddress == null){
+			return ;
+		}
+	}
+
+	void send_packet(byte[] packet) throws IOException {
+		if (this.client_connection == null){
+			return ;
+		}
+		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, this.ipAddress, this.port);
+		client_connection.send(sendPacket);
+	}
+
+	DatagramPacket receive_packet() throws IOException{
+		if (this.client_connection == null){
+			return null;
+		}
+		byte[] receiveData = new byte[576];
+		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		this.client_connection.receive(receivePacket);
+		String returnString = Arrays.toString(receivePacket.getData());
+		return receivePacket;
+	}
+
+
 	private void parse_DHCP_offer(DatagramPacket offer) throws UnknownHostException{
 		if (offer == null){
 			return ;
 		}
 		byte[] DHCPData = offer.getData();
 		parse_general_data(DHCPData);
-		System.out.println("Ip lease time: " + ipAddressLeaseTime);
-		System.out.println("Message type: " + DHCPMessageType);
 		receivedIpAddress = Arrays.copyOfRange(DHCPData, 16, 20);
 		serverIpAddress = Arrays.copyOfRange(DHCPData, 20, 24);
 		DHCPReceivedAddress = InetAddress.getByAddress(receivedIpAddress);
@@ -100,7 +98,6 @@ public class DHCP_Client {
 		if (serverIdentifierAddress != null && ! DHCPServerAddress.equals(serverIdentifierAddress)){
 			throw new UnknownHostException("The received ip adresses in the DHCP packet and in the options do not match.");
 		}
-		System.out.println("Server Address: " + DHCPServerAddress.getHostAddress());
 	}
 
 	private void parse_general_data(byte[] DHCPData)
@@ -121,24 +118,24 @@ public class DHCP_Client {
 			index+= 2 + optionLength;
 		}
 	}
-	
+
 	private void parse_option(byte optionNb, int optionLength, byte[] optionContents) throws UnknownHostException {
 		switch (optionNb) {
 		case (byte) 53:
 			DHCPMessageType = optionContents[0];
-			break;
+		break;
 		case (byte) 54:
 			serverIdentifierAddress = InetAddress.getByAddress(optionContents);
-			break;
+		break;
 		case (byte) 51:
 			ipAddressLeaseTime = 16777216 * (int) (optionContents[0] & 0xFF) +  65536 * (int) (optionContents[1] & 0xFF) + 256 * (int) (optionContents[2] & 0xFF) + (int) (optionContents[3] & 0xFF);
-			break;
-			
+		break;
+
 		default:
 			break;
 		}
 	}
-	
+
 	private boolean is_valid_mac(DatagramPacket packet){
 		if (packet == null){
 			return false;
@@ -172,13 +169,12 @@ public class DHCP_Client {
 		byte[] option_server_ip_one = {(byte) 54, (byte) 4};
 		byte[] option_server_ip = array_concatenate(option_server_ip_one, serverIpAddress);
 		byte[] option_end = { (byte) 255};
-		
+
 		// return one big byte array, containing all the above 
 		byte[] dhcp_discover_packet = array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE, option_msg_type, option_requested_ip, option_server_ip, option_end); 
-		System.out.println(Arrays.toString(dhcp_discover_packet));
 		return dhcp_discover_packet; 
 	}
-	
+
 	public byte[] DHCP_discover(){
 		byte[] op = {(byte) 0x1};
 		byte[] htype = {(byte) 0x1};
@@ -199,10 +195,9 @@ public class DHCP_Client {
 
 		byte[] option_msg_type = { (byte) 53, (byte) 1, (byte) 1};// DCHP discover request, # 53
 		byte[] option_ ={(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6, (byte) 255}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
-		
+
 		// return one big byte array, containing all the above 
 		byte[] dhcp_discover_packet = array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE, option_msg_type, option_); 
-		System.out.println(Arrays.toString(dhcp_discover_packet));
 		return dhcp_discover_packet; 
 	}
 

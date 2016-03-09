@@ -1,28 +1,52 @@
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
+
+import com.sun.org.apache.xpath.internal.axes.SelfIteratorNoPredicate;
 
 
 
 
 public class DHCP_Client {
-	public void send_discover() throws Exception {
-		byte bin = (byte) 0xA2;
-		System.out.println(bin);
+	
+	private InetAddress ipAddress; 
+	private int port; 
+	private DatagramPacket DHCP_discover_packet;
+	private InetAddress DHCPServerAddress; 
+	
+	public DHCP_Client(String ipAddress, int port) throws UnknownHostException {
+		this.ipAddress = InetAddress.getByName(ipAddress);
+		this.port = port; 
+	
+	}
+	
+	public DatagramPacket send_packet(byte[] packet) throws Exception {
 
 		DatagramSocket client_connection = new DatagramSocket();
-		InetAddress server_adress = InetAddress.getByName("192.168.2.101");
+		//InetAddress server_adress = InetAddress.getByName("192.168.2.101");
 		
 		byte[] receiveData = new byte[1024];
-		byte[] data = DHCP_discover();
-		DatagramPacket sendPacket = new DatagramPacket(data, data.length, server_adress, 12345);
+		
+		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, ipAddress, port);
 		client_connection.send(sendPacket);
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 		client_connection.receive(receivePacket);
 		String returnString = new String(receivePacket.getData());
 		System.out.println("From server: " + returnString);
 		client_connection.close();
+		return receivePacket;
+	}
+	
+	public String send_DHCP_discover() throws Exception{
+		DHCP_discover_packet = send_packet(DHCP_discover());
+		byte[] DHCPData = DHCP_discover_packet.getData();
+		byte[] ipAddress = Arrays.copyOfRange(DHCPData, 16, 20);
+		DHCPServerAddress = InetAddress.getByAddress(ipAddress);
+		return DHCPServerAddress.toString();  
+		
+		
 	}
 
 	public byte[] DHCP_discover(){

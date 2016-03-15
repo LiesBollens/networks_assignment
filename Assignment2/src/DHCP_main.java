@@ -10,8 +10,9 @@ public class DHCP_main {
 		InetAddress ip = InetAddress.getLocalHost();
 		NetworkInterface network = NetworkInterface.getByInetAddress(ip);
 		byte[] macAddress = network.getHardwareAddress(); 
+		System.out.println(macAddress.toString());
 		
-		DHCP_Client client = new DHCP_Client("192.168.2.1", 67,macAddress);
+		DHCP_Client client = new DHCP_Client("192.168.1.1", 67,macAddress);
 		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 	}
 }

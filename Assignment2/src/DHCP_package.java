@@ -200,7 +200,7 @@ public class DHCP_package {
 			byte[] option_msg_type = { (byte) 53, (byte) 1, (byte) 1};// DCHP discover request, # 53
 			
 			// optional data 
-			byte[] option_ ={(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6, (byte) 255}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
+			byte[] option_ ={(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
 
 			public DHCP_package() throws UnknownHostException, SocketException{
 				Arrays.fill(sname, (byte) 0 );
@@ -213,7 +213,7 @@ public class DHCP_package {
 			}
 			
 			public byte[] get_package(){
-				return array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE, option_, option_end);
+				return array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE,option_msg_type, option_, option_end);
 			}
 			
 			// a function to create one big array from all the given arrays

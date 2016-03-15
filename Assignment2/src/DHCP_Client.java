@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
@@ -17,7 +18,7 @@ public class DHCP_Client {
 
 
 	public int getPort() {
-		return port;
+		return portOutgoing;
 	}
 
 
@@ -52,7 +53,7 @@ public class DHCP_Client {
 
 
 	public DatagramSocket getClient_connection() {
-		return client_connection;
+		return client_connection_outgoing;
 	}
 
 
@@ -101,8 +102,16 @@ public class DHCP_Client {
 	}
 
 
-	public void setClient_connection(DatagramSocket client_connection) {
-		this.client_connection = client_connection;
+	public void setClient_connection() throws SocketException {
+		this.client_connection_outgoing = new DatagramSocket();
+		if ( this.portIncoming == this.portOutgoing){
+			this.client_connection_incoming = this.client_connection_outgoing; 
+		}
+		else {
+			this.client_connection_incoming = new DatagramSocket(); 
+		}
+		
+		
 	}
 
 
@@ -121,14 +130,16 @@ public class DHCP_Client {
 	}
 
 	private InetAddress ipAddress; 
-	private int port; 
+	private int portOutgoing;
+	private int portIncoming; 
 	private DatagramPacket DHCP_packet;
 	private InetAddress DHCPReceivedAddress;
 	private InetAddress DHCPServerAddress;
 	private byte[] receivedIpAddress;
 	private byte[] serverIpAddress;
 	private byte[] MAC;
-	private DatagramSocket client_connection;
+	private DatagramSocket client_connection_outgoing;
+	private DatagramSocket client_connection_incoming;
 	private static byte[] MAGIC_COOKIE = {(byte) 99, (byte) -126, (byte) 83, (byte) 99};
 
 	private byte DHCPMessageType;
@@ -139,7 +150,8 @@ public class DHCP_Client {
 		
 		this.ipAddress = InetAddress.getByName(ipAddress);
 		// the port on which the client has to operate
-		this.port = port; 
+		this.portOutgoing = port;
+		this.portIncoming = port; 
 		
 		// the client hardware address
 		byte[] chaddr_1 = macAddress; 
@@ -148,17 +160,26 @@ public class DHCP_Client {
 		this.MAC = array_concatenate(chaddr_1, chaddr_2);
 
 	}
+	
+	public DHCP_Client( String ipAddress, int portIncoming, int portOutgoing, byte[] macAddress ) throws Exception{
+		
+	}
 
 
 	public InetAddress execute_DHCP() throws Exception {
 		// open a new client connection 
-		setClient_connection(new DatagramSocket());
+		setClient_connection();
 		// send the DHCPDiscover packet -- first phase
 		DHCP_package DHCPDiscover = new DHCP_package();
-		
+		DHCPDiscover.set_message_type(1);
+		System.out.println("going to send discover packet");
+		System.out.println(Arrays.toString(DHCPDiscover.get_package()));
 		send_packet(DHCPDiscover.get_package());
+		System.out.println(Arrays.toString(DHCP_discover()));
+		//send_packet(DHCP_discover());
 		while (! is_valid_mac(DHCP_packet)){
 			this.DHCP_packet = receive_packet();
+			System.out.println("received discover packet");
 		}
 		
 		// check the received packet, which should be a DHCPOffer 
@@ -184,39 +205,43 @@ public class DHCP_Client {
 		// we have to try again by sending a new discovery packet 
 		if (DHCPMessageType != (byte) 5){
 			if (DHCPMessageType == (byte) 6) {
-				client_connection.close();
-				DHCP_Client client = new DHCP_Client(ipAddress.getHostAddress(), this.port , Arrays.copyOfRange(MAC, 0, 6));
+				client_connection_outgoing.close();
+				DHCP_Client client = new DHCP_Client(ipAddress.getHostAddress(), this.portOutgoing , Arrays.copyOfRange(MAC, 0, 6));
 				return client.execute_DHCP();
 			}
 		}
 
 		// close the client connection 
-		client_connection.close();
+		client_connection_outgoing.close();
 		// return the IP address 
 		return DHCPReceivedAddress;
 	}
 	
-	public void release_DHCP(){
+	public void release_DHCP() throws UnknownHostException, SocketException{
 		if (ipAddress == null){
 			return ;
 		}
+		DHCP_package releasePacket = new DHCP_package();
+		releasePacket.set_message_type(7);
+		releasePacket.setSiaddr(getServerIpAddress());
+		releasePacket.setChaddr(MAC);
 	}
 
 	void send_packet(byte[] packet) throws IOException {
-		if (this.client_connection == null){
+		if (this.client_connection_outgoing == null){
 			return ;
 		}
-		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, this.ipAddress, this.port);
-		client_connection.send(sendPacket);
+		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, this.ipAddress, this.portOutgoing);
+		client_connection_outgoing.send(sendPacket);
 	}
 
 	DatagramPacket receive_packet() throws IOException{
-		if (this.client_connection == null){
+		if (this.client_connection_outgoing == null){
 			return null;
 		}
 		byte[] receiveData = new byte[576];
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		this.client_connection.receive(receivePacket);
+		this.client_connection_outgoing.receive(receivePacket);
 		String returnString = Arrays.toString(receivePacket.getData());
 		return receivePacket;
 	}

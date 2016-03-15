@@ -170,10 +170,12 @@ public class DHCP_Client {
 		// open a new client connection 
 		setClient_connection();
 		// send the DHCPDiscover packet -- first phase
-		DHCP_package DHCPDiscover = new DHCP_package();
+
+		DHCP_package DHCPDiscover = new DHCP_package(MAC);
 		DHCPDiscover.set_message_type(1);
 		System.out.println("going to send discover packet");
 		System.out.println(Arrays.toString(DHCPDiscover.get_package()));
+
 		send_packet(DHCPDiscover.get_package());
 		System.out.println(Arrays.toString(DHCP_discover()));
 		//send_packet(DHCP_discover());
@@ -186,7 +188,7 @@ public class DHCP_Client {
 		parse_DHCP_offer(this.DHCP_packet);
 		
 		// send the DHCPRequest packet
-		DHCP_package DHCPRequest = new DHCP_package(); 
+		DHCP_package DHCPRequest = new DHCP_package(MAC); 
 		DHCPRequest.setSiaddr(getServerIpAddress());
 		DHCPRequest.setChaddr(MAC);
 		DHCPRequest.set_message_type(3);
@@ -221,7 +223,7 @@ public class DHCP_Client {
 		if (ipAddress == null){
 			return ;
 		}
-		DHCP_package releasePacket = new DHCP_package();
+		DHCP_package releasePacket = new DHCP_package(MAC);
 		releasePacket.set_message_type(7);
 		releasePacket.setSiaddr(getServerIpAddress());
 		releasePacket.setChaddr(MAC);

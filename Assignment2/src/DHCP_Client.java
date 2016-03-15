@@ -154,7 +154,7 @@ public class DHCP_Client {
 		// open a new client connection 
 		setClient_connection(new DatagramSocket());
 		// send the DHCPDiscover packet -- first phase
-		DHCP_package DHCPDiscover = new DHCP_package();
+		DHCP_package DHCPDiscover = new DHCP_package(MAC);
 		
 		send_packet(DHCPDiscover.get_package());
 		while (! is_valid_mac(DHCP_packet)){
@@ -165,7 +165,7 @@ public class DHCP_Client {
 		parse_DHCP_offer(this.DHCP_packet);
 		
 		// send the DHCPRequest packet
-		DHCP_package DHCPRequest = new DHCP_package(); 
+		DHCP_package DHCPRequest = new DHCP_package(MAC); 
 		DHCPRequest.setSiaddr(getServerIpAddress());
 		DHCPRequest.setChaddr(MAC);
 		DHCPRequest.set_message_type(3);

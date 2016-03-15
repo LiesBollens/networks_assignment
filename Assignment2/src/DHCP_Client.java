@@ -262,7 +262,9 @@ public class DHCP_Client {
 		receivedIpAddress = Arrays.copyOfRange(DHCPData, 16, 20);
 		serverIpAddress = Arrays.copyOfRange(DHCPData, 20, 24);
 		DHCPReceivedAddress = InetAddress.getByAddress(receivedIpAddress);
+		System.out.println(DHCPReceivedAddress.getHostAddress() + " received ip address");
 		DHCPServerAddress = InetAddress.getByAddress(serverIpAddress);
+		System.out.println(DHCPServerAddress.getHostAddress() + " server ip address ");
 		if (serverIdentifierAddress != null && ! DHCPServerAddress.equals(serverIdentifierAddress)){
 			throw new UnknownHostException("The received ip adresses in the DHCP packet and in the options do not match.");
 		}

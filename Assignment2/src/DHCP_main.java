@@ -30,7 +30,7 @@ public class DHCP_main {
         
         System.out.println(macAddress);
 		
-		DHCP_Client client = new DHCP_Client("192.168.1.100", 2668, 67, macAddress);
+		DHCP_Client client = new DHCP_Client("192.168.1.1", 68, 67, macAddress);
 
 		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 	}

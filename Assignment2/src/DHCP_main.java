@@ -7,6 +7,7 @@ import java.util.Enumeration;
 
 public class DHCP_main {
 	public static void main(String args[]) throws Exception {
+		
 		// get the mac adddress from the computer 
 		byte[] macAddress = null;
 		Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -30,7 +31,7 @@ public class DHCP_main {
         
         System.out.println(macAddress);
 		
-		DHCP_Client client = new DHCP_Client("192.168.1.1", 67, macAddress);
+		DHCP_Client client = new DHCP_Client("192.168.1.1", 67, 68, macAddress);
 
 		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 	}

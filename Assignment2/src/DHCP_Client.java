@@ -108,7 +108,7 @@ public class DHCP_Client {
 			this.client_connection_incoming = this.client_connection_outgoing; 
 		}
 		else {
-			this.client_connection_incoming = new DatagramSocket(); 
+			this.client_connection_incoming = new DatagramSocket(this.portIncoming); 
 		}
 		
 		
@@ -162,7 +162,17 @@ public class DHCP_Client {
 	}
 	
 	public DHCP_Client( String ipAddress, int portIncoming, int portOutgoing, byte[] macAddress ) throws Exception{
+		System.out.println("making a DHCP client");
+		this.ipAddress = InetAddress.getByName(ipAddress);
+		// the port on which the client has to operate
+		this.portOutgoing = portOutgoing;
+		this.portIncoming = portIncoming; 
 		
+		// the client hardware address
+		byte[] chaddr_1 = macAddress; 
+		byte[] chaddr_2 = new byte[10];
+		Arrays.fill( chaddr_2, (byte) 0 );
+		this.MAC = array_concatenate(chaddr_1, chaddr_2);
 	}
 
 
@@ -182,6 +192,7 @@ public class DHCP_Client {
 		while (! is_valid_mac(DHCP_packet)){
 			this.DHCP_packet = receive_packet();
 			System.out.println("received discover packet");
+			System.out.println(Arrays.toString(DHCP_packet.getData()));
 		}
 		
 		// check the received packet, which should be a DHCPOffer 
@@ -201,6 +212,7 @@ public class DHCP_Client {
 		
 		// receive the DHCPAck packet
 		DatagramPacket DHCP_ACK_packet = receive_packet();
+		System.out.println("received acknowledgde packet");
 		// check the received packet 
 		parse_DHCP_offer(DHCP_ACK_packet);
 		// if we got a not acknowledge packet instead of an acknowledge packet, 
@@ -219,7 +231,7 @@ public class DHCP_Client {
 		return DHCPReceivedAddress;
 	}
 	
-	public void release_DHCP() throws UnknownHostException, SocketException{
+	public void release_DHCP() throws IOException{
 		if (ipAddress == null){
 			return ;
 		}
@@ -227,6 +239,7 @@ public class DHCP_Client {
 		releasePacket.set_message_type(7);
 		releasePacket.setSiaddr(getServerIpAddress());
 		releasePacket.setChaddr(MAC);
+		send_packet(releasePacket.get_package());
 	}
 
 	void send_packet(byte[] packet) throws IOException {
@@ -238,12 +251,12 @@ public class DHCP_Client {
 	}
 
 	DatagramPacket receive_packet() throws IOException{
-		if (this.client_connection_outgoing == null){
+		if (this.client_connection_incoming == null){
 			return null;
 		}
 		byte[] receiveData = new byte[576];
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		this.client_connection_outgoing.receive(receivePacket);
+		this.client_connection_incoming.receive(receivePacket);
 		String returnString = Arrays.toString(receivePacket.getData());
 		return receivePacket;
 	}

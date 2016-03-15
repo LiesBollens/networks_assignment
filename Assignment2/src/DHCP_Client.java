@@ -146,21 +146,6 @@ public class DHCP_Client {
 	private InetAddress serverIdentifierAddress;
 	private int ipAddressLeaseTime;
 
-	public DHCP_Client(String ipAddress, int port, byte[] macAddress) throws Exception {
-		
-		this.ipAddress = InetAddress.getByName(ipAddress);
-		// the port on which the client has to operate
-		this.portOutgoing = port;
-		this.portIncoming = port; 
-		
-		// the client hardware address
-		byte[] chaddr_1 = macAddress; 
-		byte[] chaddr_2 = new byte[10];
-		Arrays.fill( chaddr_2, (byte) 0 );
-		this.MAC = array_concatenate(chaddr_1, chaddr_2);
-
-	}
-	
 	public DHCP_Client( String ipAddress, int portIncoming, int portOutgoing, byte[] macAddress ) throws Exception{
 		System.out.println("making a DHCP client");
 		this.ipAddress = InetAddress.getByName(ipAddress);
@@ -175,6 +160,11 @@ public class DHCP_Client {
 		this.MAC = array_concatenate(chaddr_1, chaddr_2);
 	}
 
+	
+	public DHCP_Client(String ipAddress, int port, byte[] macAddress) throws Exception {
+		this(ipAddress, port, port, macAddress);
+	}
+	
 
 	public InetAddress execute_DHCP() throws Exception {
 		// open a new client connection 
@@ -244,6 +234,7 @@ public class DHCP_Client {
 
 	void send_packet(byte[] packet) throws IOException {
 		if (this.client_connection_outgoing == null){
+			System.out.println("NO outgoing connection");
 			return ;
 		}
 		DatagramPacket sendPacket = new DatagramPacket(packet, packet.length, this.ipAddress, this.portOutgoing);

@@ -1,7 +1,9 @@
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Random;
 
 
 
@@ -36,6 +38,6 @@ public class DHCP_main {
 //		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 		
 		new DHCP_Server(500, "server.conf");
-	
+		
 	}
 }

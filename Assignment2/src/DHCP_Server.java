@@ -8,9 +8,13 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Properties;
+
+import sun.management.counter.Variability;
 
 
 public class DHCP_Server extends Thread{
@@ -36,16 +40,9 @@ public class DHCP_Server extends Thread{
 	
 	public void run(){
 //		public static void main(String args[]) throws Exception {
-//			 -		DatagramSocket client_connection = new DatagramSocket(12345);
-//			 -		byte[] data = new byte[1024];
-//			 -		byte[] receiveData = new byte[1024];
-//			 -
-//			 -		String sendData = "Wij zijn mooi.";
 //			 -		data = sendData.getBytes();
-//			 -		System.out.println("Voor");
 //			 -		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 //			 -		client_connection.receive(receivePacket);
-//			 -		System.out.println("Na");
 //			 -		InetAddress server_adress = receivePacket.getAddress();
 //			 -		int port = receivePacket.getPort();
 //			 -		String returnString = new String(receivePacket.getData());
@@ -71,7 +68,12 @@ public class DHCP_Server extends Thread{
 	}
 	
 	void addConnection(StoredConnection connection){
-		
+		String key = Arrays.toString(connection.getMacAddress());
+		StoredConnections.put(key, connection); 
+	}
+	
+	StoredConnection getConnection(String mac){
+		return StoredConnections.get(mac);
 	}
 
 	private String convert_config_path(String config) {
@@ -113,5 +115,17 @@ public class DHCP_Server extends Thread{
 		return InetAddress.getLocalHost();
 	}
 	
+	// print a list of the leased addresses along with their associated MAC addresses 
+	public void print_leased_addresses(){
+		System.out.println("list of leased addresses:");
+		for (Entry<String, StoredConnection> entry : StoredConnections.entrySet()) {
+		    String key = entry.getKey();
+		    StoredConnection value = entry.getValue();
+		    byte[] macAddress = value.getMacAddress();
+		    String ipAddress = value.getDHCPReceivedAddress().getHostAddress();
+		    System.out.println("Mac address: " + Arrays.toString(macAddress) + " , ip address: " + ipAddress);
+		    
+		}
+	}
 	
 }

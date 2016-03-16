@@ -232,8 +232,8 @@ public class DHCP_package {
 		return concatenated;
 	}
 
-	public void set_message_type(int type){
-		byte[] message_type = { (byte) 53, (byte) 1, (byte) type};
+	public void set_message_type(DHCPMessageType type){
+		byte[] message_type = { (byte) 53, (byte) 1, (byte) type.getNumber()};
 		setOption_msg_type(message_type );
 	}
 }

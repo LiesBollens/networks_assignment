@@ -30,4 +30,9 @@ public enum DHCPMessageType {
 		}
 		return null; 
 	}
+	
+	@Override
+	public String toString() {
+		return super.toString();
+	}
 }

@@ -5,24 +5,73 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Properties;
 
 
-public class DHCP_Server {
+public class DHCP_Server extends Thread{
 
 	private int port; 
 	private int max_connections;
+	
+	
+	private HashMap<String, StoredConnection> StoredConnections; 
 
 	public DHCP_Server(int port, String config){
 		this.port = port;
 		config = convert_config_path(config);
 		parse_config_file(config);
 		System.out.println(max_connections);
+		
+		// for a clean shutdown 
+		setDaemon(true);
 
-
-
-
+	}
+	
+	
+	
+	public void run(){
+//		public static void main(String args[]) throws Exception {
+//			 -		DatagramSocket client_connection = new DatagramSocket(12345);
+//			 -		byte[] data = new byte[1024];
+//			 -		byte[] receiveData = new byte[1024];
+//			 -
+//			 -		String sendData = "Wij zijn mooi.";
+//			 -		data = sendData.getBytes();
+//			 -		System.out.println("Voor");
+//			 -		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+//			 -		client_connection.receive(receivePacket);
+//			 -		System.out.println("Na");
+//			 -		InetAddress server_adress = receivePacket.getAddress();
+//			 -		int port = receivePacket.getPort();
+//			 -		String returnString = new String(receivePacket.getData());
+//			 -		System.out.println("From server: " + returnString);
+//			 -		DatagramPacket sendPacket = new DatagramPacket(data, data.length, server_adress, port);
+//			 -		client_connection.send(sendPacket);
+//			 -
+//			 -	}
+		try {
+			DatagramSocket clientConnection = new DatagramSocket(port);
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		byte[] receiveData = new byte[576];
+		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		
+		
+	}
+	
+	StoredConnection getByMacaddress(String mac){
+		return StoredConnections.get(mac); 
+	}
+	
+	void addConnection(StoredConnection connection){
+		
 	}
 
 	private String convert_config_path(String config) {
@@ -59,4 +108,10 @@ public class DHCP_Server {
 			this.max_connections = 3;
 		}
 	}
+	
+	public InetAddress getAddress() throws UnknownHostException{
+		return InetAddress.getLocalHost();
+	}
+	
+	
 }

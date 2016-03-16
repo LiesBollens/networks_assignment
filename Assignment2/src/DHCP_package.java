@@ -1,3 +1,4 @@
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -8,6 +9,7 @@ public class DHCP_package {
 	public DHCP_package(byte[] MAC) throws UnknownHostException, SocketException{
 		this.chaddr = MAC; 
 	}
+	
 
 	public byte[] getOp() {
 		return op;

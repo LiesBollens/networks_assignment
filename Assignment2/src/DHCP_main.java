@@ -8,7 +8,7 @@ import java.util.Random;
 
 
 public class DHCP_main {
-	static boolean IsClient = true; 
+	static boolean IsClient = false; 
 	public static void main(String args[]) throws Exception {
 //		
 //		// get the mac adddress from the computer 
@@ -42,6 +42,9 @@ public class DHCP_main {
 		} else {
 			DHCP_Server server = new DHCP_Server(1234, "server.conf");
 			server.start();
+			while (true) {
+				Thread.sleep(10000);
+			}
 		}
 		
 		

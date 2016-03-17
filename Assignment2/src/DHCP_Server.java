@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -24,9 +25,13 @@ public class DHCP_Server extends Thread{
 
 	private int port; 
 	private int max_connections;
+	private long ip_table_start;
+	private long ip_table_end;
+	private long lease_time;
 
 
 	private HashMap<String, StoredConnection> StoredConnections; 
+	private ArrayList<String[]> ClientTable;
 
 	public DHCP_Server(int port, String config){
 		this.port = port;
@@ -42,7 +47,7 @@ public class DHCP_Server extends Thread{
 
 
 	public void run(){
-		ExecutorService executor = Executors.newFixedThreadPool(3);
+		ExecutorService executor = Executors.newFixedThreadPool(this.max_connections);
 
 		//		public static void main(String args[]) throws Exception {
 		//			 -		data = sendData.getBytes();
@@ -122,9 +127,16 @@ public class DHCP_Server extends Thread{
 		}
 
 		String max_conn = null;
+		String start_addr = null;
+		String end_addr = null;
+		String lease_t = null;
+		
 
 		if (file_load_succesfull) {
 			max_conn = prop.getProperty("max_connections");
+			start_addr = prop.getProperty("ip_table_Start");
+			end_addr = prop.getProperty("ip_table_end");
+			lease_t = prop.getProperty("lease_time");
 		}
 
 		if (max_conn != null) {
@@ -132,6 +144,36 @@ public class DHCP_Server extends Thread{
 		}
 		else {
 			this.max_connections = 3;
+		}
+		if (start_addr != null) {
+			try {
+				this.ip_table_start = DHCPHelper.byte_to_long(InetAddress.getByName(start_addr).getAddress());
+			} catch (UnknownHostException e) {
+				byte[] temp_ip = {(byte) 192, (byte) 168, (byte) 1, (byte) 100};
+				this.ip_table_start = DHCPHelper.byte_to_long(temp_ip);
+			}
+		}
+		else {
+			byte[] temp_ip = {(byte) 192, (byte) 168, (byte) 1, (byte) 100};
+			this.ip_table_start = DHCPHelper.byte_to_long(temp_ip);
+		}
+		if (end_addr != null) {
+			try {
+				this.ip_table_end = DHCPHelper.byte_to_long(InetAddress.getByName(end_addr).getAddress());
+			} catch (UnknownHostException e) {
+				byte[] temp_ip = {(byte) 192, (byte) 168, (byte) 1, (byte) 255};
+				this.ip_table_end = DHCPHelper.byte_to_long(temp_ip);
+			}
+		}
+		else {
+			byte[] temp_ip = {(byte) 192, (byte) 168, (byte) 1, (byte) 100};
+			this.ip_table_end = DHCPHelper.byte_to_long(temp_ip);
+		}
+		if (lease_t != null) {
+			this.lease_time = Integer.parseInt(lease_t);
+		}
+		else {
+			this.lease_time = 1000;
 		}
 	}
 
@@ -149,6 +191,18 @@ public class DHCP_Server extends Thread{
 			String ipAddress = value.getDHCPReceivedAddress().getHostAddress();
 			System.out.println("Mac address: " + Arrays.toString(macAddress) + " , ip address: " + ipAddress);
 
+		}
+	}
+	
+	public byte[] get_next_available_ip() {
+		for (long ip = ip_table_start; ip < ip_table_end; ip++) {
+			String temp_ip = String.valueOf(ip);
+			boolean in_table = false;
+			for (int i = 0; i < this.ClientTable.size(); i++) {
+				if (this.ClientTable.get(i)[0] == temp_ip) {
+					
+				}
+			}
 		}
 	}
 

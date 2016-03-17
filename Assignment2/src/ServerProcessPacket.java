@@ -17,7 +17,7 @@ public class ServerProcessPacket implements  Runnable {
 	private byte[] xid; 
 	private byte[] hlen; 
 	private byte[] opcode; 
-	private DHCPMessageType DHCPMessageType;
+	private DHCPMessageType DHCPMessageNumber;
 	private int ipAddressLeaseTime;
 	private static InetAddress DISCOVER_ADDRESS ;
 	private static byte[] MAGIC_COOKIE = {(byte) 99, (byte) -126, (byte) 83, (byte) 99};
@@ -48,6 +48,8 @@ public class ServerProcessPacket implements  Runnable {
 			e.printStackTrace();
 			return; 
 		}
+		System.out.println("received packet: " + DHCPMessageNumber.getNumber());
+		System.out.println(Arrays.toString(packet.getData()));
 		
 	}
 	
@@ -73,7 +75,7 @@ public class ServerProcessPacket implements  Runnable {
 		// if the address is not equal to the server address and the message is not a discover message,
 		// return
 		if (!DHCPServerAddress.equals(this.server.getAddress())){
-			if( ! (DHCPServerAddress.equals(DISCOVER_ADDRESS) && DHCPMessageType == DHCPMessageType.DHCPDISCOVER)){
+			if( ! (DHCPServerAddress.equals(DISCOVER_ADDRESS) && DHCPMessageNumber == DHCPMessageNumber.DHCPDISCOVER)){
 				return -1; 
 			}
 		}
@@ -119,7 +121,7 @@ public class ServerProcessPacket implements  Runnable {
 //        7     DHCPRELEASE
 //        8     DHCPINFORM
 		case (byte) 53:
-			DHCPMessageType = DHCPMessageType.getMessageType(optionContents[0]);
+			DHCPMessageNumber = DHCPMessageNumber.getMessageType(optionContents[0]);
 		break;
 		
 		case (byte) 55:

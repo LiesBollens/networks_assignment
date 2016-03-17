@@ -37,7 +37,7 @@ public class DHCP_main {
 //
 //		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 		
-		new DHCP_Server(500, "server.conf");
+		new DHCP_Server(1234, "server.conf");
 		
 	}
 }

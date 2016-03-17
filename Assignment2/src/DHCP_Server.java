@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import sun.management.counter.Variability;
+
 
 
 public class DHCP_Server extends Thread{
@@ -63,8 +63,14 @@ public class DHCP_Server extends Thread{
 		
 	}
 	
-	StoredConnection getByMacaddress(String mac){
+	
+	StoredConnection getConnection(String mac){
 		return StoredConnections.get(mac); 
+	}
+	
+	StoredConnection getConnection(byte[] mac){
+		String key = Arrays.toString(mac);
+		return StoredConnections.get(key);
 	}
 	
 	void addConnection(StoredConnection connection){
@@ -72,9 +78,7 @@ public class DHCP_Server extends Thread{
 		StoredConnections.put(key, connection); 
 	}
 	
-	StoredConnection getConnection(String mac){
-		return StoredConnections.get(mac);
-	}
+	
 
 	private String convert_config_path(String config) {
 		URL config_url = getClass().getResource(config);

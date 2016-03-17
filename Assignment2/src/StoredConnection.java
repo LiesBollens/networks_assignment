@@ -11,11 +11,11 @@ public class StoredConnection {
 	private byte[] hlen; 
 	private byte[] opcode; 
 	private DHCPMessageType DHCPMessageType;
-	private int ipAddressLeaseTime;
-	private int startOfLease;
+	private long ipAddressLeaseTime;
+	private long startOfLease;
 	
 	
-	public StoredConnection(int leaseTime, int startOfLease, DHCPMessageType type,  byte[] macAddress, byte[] xid, byte[] hlen, byte[] opcode, InetAddress DHCPReceivedAddress, InetAddress DHCPServerAddress){
+	public StoredConnection(long leaseTime, long startOfLease, DHCPMessageType type,  byte[] macAddress, byte[] xid, byte[] hlen, byte[] opcode, InetAddress DHCPReceivedAddress, InetAddress DHCPServerAddress){
 		setMacAddress(macAddress);
 		setXid(xid);
 		setHlen(hlen);
@@ -63,12 +63,12 @@ public class StoredConnection {
 	}
 
 
-	public int getIpAddressLeaseTime() {
+	public long getIpAddressLeaseTime() {
 		return ipAddressLeaseTime;
 	}
 
 
-	public int getStartOfLease() {
+	public long getStartOfLease() {
 		return startOfLease;
 	}
 
@@ -108,12 +108,12 @@ public class StoredConnection {
 	}
 
 
-	public void setIpAddressLeaseTime(int ipAddressLeaseTime) {
+	public void setIpAddressLeaseTime(long ipAddressLeaseTime) {
 		this.ipAddressLeaseTime = ipAddressLeaseTime;
 	}
 
 
-	public void setStartOfLease(int startOfLease) {
+	public void setStartOfLease(long startOfLease) {
 		this.startOfLease = startOfLease;
 	}
 

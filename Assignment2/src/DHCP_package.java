@@ -207,7 +207,7 @@ public class DHCP_package {
 	byte[] option_msg_type = { (byte) 53, (byte) 1, (byte) 1};// DCHP discover request, # 53
 
 	// optional data 
-	byte[] option_ ={(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
+	byte[] option_ = {}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
 
 
 	public byte[] get_package(){
@@ -215,7 +215,7 @@ public class DHCP_package {
 	}
 
 	// a function to create one big array from all the given arrays
-	byte[]  array_concatenate(byte[]... array){
+	static byte[]  array_concatenate(byte[]... array){
 		int total_length = 0;
 		for ( int i=0; i< array.length; i++){
 			total_length += array[i].length;

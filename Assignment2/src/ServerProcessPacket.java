@@ -1,7 +1,16 @@
+import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+
+import org.omg.CORBA.DATA_CONVERSION;
+
+import com.sun.org.apache.xalan.internal.xsltc.trax.SmartTransformerFactoryImpl;
+
+import sun.java2d.cmm.kcms.KcmsServiceProvider;
 
 
 
@@ -21,11 +30,14 @@ public class ServerProcessPacket implements  Runnable {
 	private int ipAddressLeaseTime;
 	private static InetAddress DISCOVER_ADDRESS ;
 	private static byte[] MAGIC_COOKIE = {(byte) 99, (byte) -126, (byte) 83, (byte) 99};
+	private StoredConnection storedConnection; 
+	private DatagramSocket clientConnection; 
 	
 	
-	public ServerProcessPacket(DHCP_Server server, DatagramPacket packet){
+	public ServerProcessPacket(DHCP_Server server, DatagramPacket packet, DatagramSocket clientConnection){
 		this.server = server;
 		this.packet = packet; 
+		this.clientConnection = clientConnection; 
 		try {
 			this.DISCOVER_ADDRESS =  InetAddress.getByName("0.0.0.0");
 		} catch (UnknownHostException e) {
@@ -50,6 +62,12 @@ public class ServerProcessPacket implements  Runnable {
 		}
 		System.out.println("received packet: " + DHCPMessageNumber.getNumber());
 		System.out.println(Arrays.toString(packet.getData()));
+		try {
+			updateStoredConnection();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -148,7 +166,86 @@ public class ServerProcessPacket implements  Runnable {
 			break;
 		}
 	}
+	
+	private void updateStoredConnection() throws UnknownHostException{
+		storedConnection = this.server.getConnection(macAddress);
+		if (DHCPMessageNumber == DHCPMessageType.DHCPDISCOVER){
+			if( storedConnection!= null ){
+				// remove the connection from the server file
+				this.server.removeConnection(macAddress);
+			}
+			StoredConnection connection = new StoredConnection(this.server.getLease_time(), System.currentTimeMillis(), DHCPMessageType.DHCPDISCOVER, macAddress, xid, hlen, opcode, InetAddress.getByAddress(this.server.get_next_available_ip()), DHCPServerAddress);
+			this.server.addConnection(connection);
+		}
+		else if (DHCPMessageNumber == DHCPMessageType.DHCPREQUEST){
+			if ( storedConnection == null){
+				return;
+			} else {
+				storedConnection.setXid(xid);
+				storedConnection.setDHCPMessageType(DHCPMessageType.DHCPREQUEST);
+				storedConnection.setStartOfLease(System.currentTimeMillis());
+			}
+		}
+		else if (DHCPMessageNumber == DHCPMessageType.DHCPRELEASE){
+			this.server.removeConnection(macAddress);
+		}
+	}
+	
+	private void sendReply() throws IOException{
+		
 
+		DHCP_package offerPackage = new DHCP_package(macAddress);
+		if(DHCPMessageNumber == DHCPMessageType.DHCPDISCOVER){
+			setGenericParameters(offerPackage, DHCPMessageType.DHCPOFFER);
+			DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+			clientConnection.send(sendPacket);
+			this.storedConnection.setStartOfLease(System.currentTimeMillis());
+			this.storedConnection.setDHCPMessageType(DHCPMessageType.DHCPOFFER);
+		}
+		else if (DHCPMessageNumber == DHCPMessageType.DHCPREQUEST){
+			byte[] ipAddress = storedConnection.getDHCPReceivedAddress().getAddress();
+			String[] tableEntry = this.server.getByIpAddress(ipAddress);
+			
+			if ( ! tableEntry[1].equals(Arrays.toString(macAddress)) ){
+				setGenericParameters(offerPackage, DHCPMessageType.DHCPNAK);
+				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+				clientConnection.send(sendPacket);
+				
+			}
+			else {
+				this.server.refreshClientTable(clientIpAddress, macAddress, System.currentTimeMillis() + 1000*storedConnection.getIpAddressLeaseTime());
+				setGenericParameters(offerPackage, DHCPMessageType.DHCPACK);
+				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+				clientConnection.send(sendPacket);
+				this.storedConnection.setStartOfLease(System.currentTimeMillis());
+				this.storedConnection.setDHCPMessageType(DHCPMessageType.DHCPACK);
+			}
+			
+		} 
+		else if (DHCPMessageNumber == DHCPMessageType.DHCPRELEASE){
+			return; 
+		}
+	}
+	
+	private void setGenericParameters(DHCP_package packet, DHCPMessageType DHCPType) throws UnknownHostException{
+		byte[] op = {(byte) 2};
+		packet.setOp(op);
+		packet.setXid(this.xid);
+		packet.setYiaddr(storedConnection.getDHCPReceivedAddress().getAddress());
+		packet.setSiaddr(this.server.getAddress().getAddress());
+		byte[] chaddr2  = new byte[10];
+		packet.setChaddr(DHCP_package.array_concatenate(storedConnection.getMacAddress() , chaddr2));
+		byte[] option51_1 = { (byte) 51, (byte) 4};
+		byte[] option51_2 = DHCPHelper.long_to_byte(storedConnection.getIpAddressLeaseTime());
+		byte[] option54_1 = { (byte) 54, (byte) 4} ;
+		byte[] option54_2 = this.server.getAddress().getAddress();
+		packet.setOption_(DHCP_package.array_concatenate(option51_1, option51_2, option54_1, option54_2));
+		packet.set_message_type(DHCPType);
+		
+	}
+
+	
+		
 
 
 	

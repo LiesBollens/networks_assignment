@@ -7,12 +7,15 @@ import java.util.Random;
 
 
 
+
+
 public class DHCP_main {
 	static boolean IsClient = false; 
 	public static void main(String args[]) throws Exception {
 //		
 //		// get the mac adddress from the computer 
 		if (IsClient){
+		
 			byte[] macAddress = null;
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 	        while(networkInterfaces.hasMoreElements())

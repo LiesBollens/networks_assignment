@@ -23,6 +23,52 @@ import java.util.Properties;
 
 public class DHCP_Server extends Thread{
 
+	public int getPort() {
+		return port;
+	}
+
+
+
+	public long getLease_time() {
+		return lease_time;
+	}
+
+
+
+	public HashMap<String, StoredConnection> getStoredConnections() {
+		return StoredConnections;
+	}
+
+
+
+	public ArrayList<String[]> getClientTable() {
+		return ClientTable;
+	}
+
+
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+
+
+	public void setLease_time(long lease_time) {
+		this.lease_time = lease_time;
+	}
+
+
+
+	public void setStoredConnections(HashMap<String, StoredConnection> storedConnections) {
+		StoredConnections = storedConnections;
+	}
+
+
+
+	public void setClientTable(ArrayList<String[]> clientTable) {
+		ClientTable = clientTable;
+	}
+
 	private int port; 
 	private int max_connections;
 	private long ip_table_start;
@@ -31,6 +77,7 @@ public class DHCP_Server extends Thread{
 
 
 	private HashMap<String, StoredConnection> StoredConnections; 
+	// ip address, mac, lease time 
 	private ArrayList<String[]> ClientTable;
 
 	public DHCP_Server(int port, String config){
@@ -79,7 +126,7 @@ public class DHCP_Server extends Thread{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			Runnable DHCPPacketHandler = new ServerProcessPacket(this, receivePacket);
+			Runnable DHCPPacketHandler = new ServerProcessPacket(this, receivePacket, clientConnection);
 			executor.execute(DHCPPacketHandler);
 		}
 
@@ -102,6 +149,23 @@ public class DHCP_Server extends Thread{
 		String key = Arrays.toString(connection.getMacAddress());
 		StoredConnections.put(key, connection); 
 	}
+	
+	void removeConnection(String mac){
+		StoredConnections.remove(mac);
+		for (int i =0; i < ClientTable.size(); i++){
+			if (ClientTable.get(i)[1] == mac){
+				ClientTable.remove(i);
+				break; 
+			}
+		}
+	}
+	
+	void removeConnection(byte[] mac){
+		String key = Arrays.toString(mac);
+		removeConnection(key);
+	}
+	
+	
 
 
 
@@ -199,10 +263,38 @@ public class DHCP_Server extends Thread{
 			String temp_ip = String.valueOf(ip);
 			boolean in_table = false;
 			for (int i = 0; i < this.ClientTable.size(); i++) {
-				if (this.ClientTable.get(i)[0] == temp_ip) {
-					
+				if (this.ClientTable.get(i)[0].equals(temp_ip)) {
+					in_table = true;
+					break;
 				}
 			}
+			if (in_table == false){
+				return DHCPHelper.long_to_byte(ip);
+			}
+		}
+		return null;
+	}
+	
+	public String[] getByIpAddress(byte[] ip){
+		String ipAddress = String.valueOf(DHCPHelper.byte_to_long(ip));
+		for (int i = 0; i < ClientTable.size(); i++){
+			if ( this.ClientTable.get(i)[0].equals(ipAddress)){
+				return this.ClientTable.get(i);
+			}
+		}
+		return null; 
+		
+		
+	}
+	
+	public void refreshClientTable(byte[] ipAddress, byte[] mac, long endTime){
+		String[] tableEntry = getByIpAddress(ipAddress);
+		if (tableEntry != null){
+			tableEntry[3] = String.valueOf(endTime); 
+		}
+		else {
+			String[] entry = { String.valueOf(DHCPHelper.byte_to_long(ipAddress)), Arrays.toString(mac), String.valueOf(endTime)};
+			ClientTable.add(entry);
 		}
 	}
 

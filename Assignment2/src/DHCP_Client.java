@@ -178,6 +178,9 @@ public class DHCP_Client {
 		DHCP_package DHCPDiscover = new DHCP_package(MAC);
 		DHCPDiscover.setXid(xid);
 		DHCPDiscover.set_message_type(DHCPMessageType.DHCPDISCOVER);
+		byte[] discoverOptions = {(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6};
+		DHCPDiscover.setOption_(discoverOptions);
+		
 		send_packet(DHCPDiscover.get_package());
 		System.out.println("sent packet: " + DHCPMessageType.DHCPDISCOVER.toString()  );
 		System.out.println(Arrays.toString(DHCPDiscover.get_package()));

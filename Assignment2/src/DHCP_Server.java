@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.Properties;
 
 
@@ -39,6 +41,8 @@ public class DHCP_Server extends Thread{
 	
 	
 	public void run(){
+		ExecutorService executor = Executors.newFixedThreadPool(3);
+		
 //		public static void main(String args[]) throws Exception {
 //			 -		data = sendData.getBytes();
 //			 -		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -51,14 +55,20 @@ public class DHCP_Server extends Thread{
 //			 -		client_connection.send(sendPacket);
 //			 -
 //			 -	}
-		try {
-			DatagramSocket clientConnection = new DatagramSocket(port);
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		while(true){
+			try {
+				DatagramSocket clientConnection = new DatagramSocket(port);
+			} catch (SocketException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			byte[] receiveData = new byte[576];
+			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+			Runnable DHCPPacketHandler = new ServerProcessPacket(this, receivePacket);
+			executor.execute(DHCPPacketHandler);
 		}
-		byte[] receiveData = new byte[576];
-		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		
+		
 		
 		
 	}

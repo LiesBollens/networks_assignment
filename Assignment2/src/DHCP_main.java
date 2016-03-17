@@ -8,36 +8,44 @@ import java.util.Random;
 
 
 public class DHCP_main {
+	static boolean IsClient = true; 
 	public static void main(String args[]) throws Exception {
 //		
 //		// get the mac adddress from the computer 
-//		byte[] macAddress = null;
-//		Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-//        while(networkInterfaces.hasMoreElements())
-//        {
-//            NetworkInterface network1 = networkInterfaces.nextElement();
-//            byte[] mac = network1.getHardwareAddress();
-//            if(mac != null)
-//            {
-//                macAddress = mac;
-//            }
-//        }
-//        if (macAddress == null) {
-//    		InetAddress ip = InetAddress.getLocalHost();
-//    		System.out.println(ip);
-//    		NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-//    			System.out.println(network);
-//		macAddress = network.getHardwareAddress(); 
-//		
-//        }
-//        
-//        System.out.println(macAddress);
-//		
-//		DHCP_Client client = new DHCP_Client("192.168.1.1", 68, 67, macAddress);
-//
-//		System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
+		if (IsClient){
+			byte[] macAddress = null;
+			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+	        while(networkInterfaces.hasMoreElements())
+	        {
+	            NetworkInterface network1 = networkInterfaces.nextElement();
+	            byte[] mac = network1.getHardwareAddress();
+	            if(mac != null)
+	            {
+	                macAddress = mac;
+	            }
+	        }
+	        if (macAddress == null) {
+	    		InetAddress ip = InetAddress.getLocalHost();
+	    		System.out.println(ip);
+	    		NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+	    			System.out.println(network);
+			macAddress = network.getHardwareAddress(); 
+			
+	        }
+	        
+	        System.out.println(macAddress);
+			
+			DHCP_Client client = new DHCP_Client("172.20.10.2", 1234, 1234, macAddress);
+
+			System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
+			
+		} else {
+			DHCP_Server server = new DHCP_Server(1234, "server.conf");
+			server.start();
+		}
 		
-		new DHCP_Server(1234, "server.conf");
+		
+		
 		
 	}
 }

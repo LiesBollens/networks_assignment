@@ -23,10 +23,13 @@ import java.util.Properties;
 
 public class DHCP_Server extends Thread{
 
-	public int getPort() {
-		return port;
+	public int getIncommingPort() {
+		return incomming_port;
 	}
 
+	public int getOutgoingPort() {
+		return outgoing_port;
+	}
 
 
 	public long getLease_time() {
@@ -47,9 +50,6 @@ public class DHCP_Server extends Thread{
 
 
 
-	public void setPort(int port) {
-		this.port = port;
-	}
 
 
 
@@ -69,19 +69,19 @@ public class DHCP_Server extends Thread{
 		ClientTable = clientTable;
 	}
 
-	private int port; 
+	private int incomming_port; 
+	private int outgoing_port;
 	private int max_connections;
 	private long ip_table_start;
 	private long ip_table_end;
 	private long lease_time;
 
 
-	private HashMap<String, StoredConnection> StoredConnections; 
+	private HashMap<String, StoredConnection> StoredConnections = new HashMap<String, StoredConnection>(); 
 	// ip address, mac, lease time 
-	private ArrayList<String[]> ClientTable;
+	private ArrayList<String[]> ClientTable = new ArrayList<String[]>();
 
-	public DHCP_Server(int port, String config){
-		this.port = port;
+	public DHCP_Server(String config){
 		config = convert_config_path(config);
 		parse_config_file(config);
 		System.out.println(max_connections);
@@ -111,7 +111,7 @@ public class DHCP_Server extends Thread{
 		DatagramSocket clientConnection = null;
 
 		try {
-			clientConnection = new DatagramSocket(port);
+			clientConnection = new DatagramSocket(getIncommingPort());
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -142,6 +142,7 @@ public class DHCP_Server extends Thread{
 
 	StoredConnection getConnection(byte[] mac){
 		String key = Arrays.toString(mac);
+		System.out.println(StoredConnections);
 		return StoredConnections.get(key);
 	}
 
@@ -194,13 +195,20 @@ public class DHCP_Server extends Thread{
 		String start_addr = null;
 		String end_addr = null;
 		String lease_t = null;
+		String inc_p = null;
+		String out_p = null;
 		
 
 		if (file_load_succesfull) {
 			max_conn = prop.getProperty("max_connections");
-			start_addr = prop.getProperty("ip_table_Start");
+			start_addr = prop.getProperty("ip_table_start");
 			end_addr = prop.getProperty("ip_table_end");
 			lease_t = prop.getProperty("lease_time");
+			inc_p = prop.getProperty("incomming_port");
+			out_p = prop.getProperty("outgoing_port");
+			
+			System.out.println(start_addr);
+			System.out.println(end_addr);
 		}
 
 		if (max_conn != null) {
@@ -239,6 +247,18 @@ public class DHCP_Server extends Thread{
 		else {
 			this.lease_time = 1000;
 		}
+		if (inc_p != null) {
+			this.incomming_port = Integer.parseInt(inc_p);
+		}
+		else {
+			this.incomming_port = 1234;
+		}
+		if (out_p != null) {
+			this.outgoing_port = Integer.parseInt(out_p);
+		}
+		else {
+			this.outgoing_port = 1235;
+		}
 	}
 
 	public InetAddress getAddress() throws UnknownHostException{
@@ -269,6 +289,7 @@ public class DHCP_Server extends Thread{
 				}
 			}
 			if (in_table == false){
+				System.out.println(ip);
 				return DHCPHelper.long_to_byte(ip);
 			}
 		}

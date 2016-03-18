@@ -43,7 +43,7 @@ public class DHCP_main {
 			System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 			
 		} else {
-			DHCP_Server server = new DHCP_Server(1234, "server.conf");
+			DHCP_Server server = new DHCP_Server("server.conf");
 			server.start();
 			while (true) {
 				Thread.sleep(10000);

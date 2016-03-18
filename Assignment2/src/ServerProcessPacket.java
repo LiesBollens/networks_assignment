@@ -64,7 +64,11 @@ public class ServerProcessPacket implements  Runnable {
 		System.out.println(Arrays.toString(packet.getData()));
 		try {
 			updateStoredConnection();
+			sendReply();
 		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -168,16 +172,20 @@ public class ServerProcessPacket implements  Runnable {
 	}
 	
 	private void updateStoredConnection() throws UnknownHostException{
+		System.out.println(Arrays.toString(macAddress));
 		storedConnection = this.server.getConnection(macAddress);
 		if (DHCPMessageNumber == DHCPMessageType.DHCPDISCOVER){
+			System.out.println("Recieved discover");
 			if( storedConnection!= null ){
 				// remove the connection from the server file
 				this.server.removeConnection(macAddress);
 			}
 			StoredConnection connection = new StoredConnection(this.server.getLease_time(), System.currentTimeMillis(), DHCPMessageType.DHCPDISCOVER, macAddress, xid, hlen, opcode, InetAddress.getByAddress(this.server.get_next_available_ip()), DHCPServerAddress);
 			this.server.addConnection(connection);
+			storedConnection = connection;
 		}
 		else if (DHCPMessageNumber == DHCPMessageType.DHCPREQUEST){
+			System.out.println("Recieved request");
 			if ( storedConnection == null){
 				return;
 			} else {
@@ -187,6 +195,7 @@ public class ServerProcessPacket implements  Runnable {
 			}
 		}
 		else if (DHCPMessageNumber == DHCPMessageType.DHCPRELEASE){
+			System.out.println("Received release");
 			this.server.removeConnection(macAddress);
 		}
 	}
@@ -197,28 +206,32 @@ public class ServerProcessPacket implements  Runnable {
 		DHCP_package offerPackage = new DHCP_package(macAddress);
 		if(DHCPMessageNumber == DHCPMessageType.DHCPDISCOVER){
 			setGenericParameters(offerPackage, DHCPMessageType.DHCPOFFER);
-			DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+			DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.packet.getAddress(), this.server.getOutgoingPort());
 			clientConnection.send(sendPacket);
 			this.storedConnection.setStartOfLease(System.currentTimeMillis());
 			this.storedConnection.setDHCPMessageType(DHCPMessageType.DHCPOFFER);
+			System.out.println("Offer was sent");
 		}
 		else if (DHCPMessageNumber == DHCPMessageType.DHCPREQUEST){
 			byte[] ipAddress = storedConnection.getDHCPReceivedAddress().getAddress();
 			String[] tableEntry = this.server.getByIpAddress(ipAddress);
+			System.out.println(Arrays.toString(tableEntry));
 			
-			if ( ! tableEntry[1].equals(Arrays.toString(macAddress)) ){
+			if (tableEntry != null && ! tableEntry[1].equals(Arrays.toString(macAddress)) ){
 				setGenericParameters(offerPackage, DHCPMessageType.DHCPNAK);
-				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.packet.getAddress(), this.server.getOutgoingPort());
 				clientConnection.send(sendPacket);
+				System.out.println("NACK was sent");
 				
 			}
 			else {
 				this.server.refreshClientTable(clientIpAddress, macAddress, System.currentTimeMillis() + 1000*storedConnection.getIpAddressLeaseTime());
 				setGenericParameters(offerPackage, DHCPMessageType.DHCPACK);
-				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.server.getAddress(), this.server.getPort());
+				DatagramPacket sendPacket = new DatagramPacket(offerPackage.get_package(), offerPackage.get_package().length, this.packet.getAddress(), this.server.getOutgoingPort());
 				clientConnection.send(sendPacket);
 				this.storedConnection.setStartOfLease(System.currentTimeMillis());
 				this.storedConnection.setDHCPMessageType(DHCPMessageType.DHCPACK);
+				System.out.println("ACK was sent");
 			}
 			
 		} 

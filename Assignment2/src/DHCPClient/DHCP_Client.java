@@ -1,3 +1,4 @@
+package DHCPClient;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -6,6 +7,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Random;
+
+import DHCPShared.DHCPMessageType;
+import DHCPShared.DHCP_package;
 
 
 

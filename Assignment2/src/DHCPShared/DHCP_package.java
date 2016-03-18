@@ -1,3 +1,4 @@
+package DHCPShared;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -215,7 +216,7 @@ public class DHCP_package {
 	}
 
 	// a function to create one big array from all the given arrays
-	static byte[]  array_concatenate(byte[]... array){
+	public static byte[]  array_concatenate(byte[]... array){
 		int total_length = 0;
 		for ( int i=0; i< array.length; i++){
 			total_length += array[i].length;

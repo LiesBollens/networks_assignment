@@ -1,3 +1,5 @@
+package DHCPShared;
+import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
@@ -5,13 +7,16 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Random;
 
+import DHCPClient.DHCP_Client;
+import DHCPServer.DHCP_Server;
+
 
 
 
 
 public class DHCP_main {
-	static boolean IsClient = false; 
-	public static void main(String args[]) throws Exception {
+	static boolean IsClient = true; 
+	public static void main(String args[]) throws Exception , FileNotFoundException{
 //		
 //		// get the mac adddress from the computer 
 		if (IsClient){

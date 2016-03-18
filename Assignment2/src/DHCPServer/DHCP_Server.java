@@ -1,3 +1,4 @@
+package DHCPServer;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +14,9 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import DHCPShared.DHCPHelper;
+
 import java.util.Properties;
 
 
@@ -126,8 +130,11 @@ public class DHCP_Server extends Thread{
 
 	private String convert_config_path(String config) {
 		URL config_url = getClass().getResource(config);
+		System.out.println(config_url + "config url ");
 		if (config_url != null) {
+			System.out.println(config_url.getPath());
 			return config_url.getPath();
+			
 		}
 		return config;
 	}

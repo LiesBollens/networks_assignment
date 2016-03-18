@@ -1,3 +1,4 @@
+package DHCPServer;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -10,6 +11,9 @@ import org.omg.CORBA.DATA_CONVERSION;
 
 import com.sun.org.apache.xalan.internal.xsltc.trax.SmartTransformerFactoryImpl;
 
+import DHCPShared.DHCPHelper;
+import DHCPShared.DHCPMessageType;
+import DHCPShared.DHCP_package;
 import sun.java2d.cmm.kcms.KcmsServiceProvider;
 
 

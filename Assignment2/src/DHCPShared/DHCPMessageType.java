@@ -1,3 +1,4 @@
+package DHCPShared;
 
 public enum DHCPMessageType {
 	

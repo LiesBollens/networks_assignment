@@ -1,5 +1,8 @@
+package DHCPServer;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+
+import DHCPShared.DHCPMessageType;
 
 public class StoredConnection {
 	

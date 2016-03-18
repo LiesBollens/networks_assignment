@@ -1,5 +1,3 @@
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +9,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -22,52 +19,6 @@ import java.util.Properties;
 
 
 public class DHCP_Server extends Thread{
-
-	public int getIncommingPort() {
-		return incomming_port;
-	}
-
-	public int getOutgoingPort() {
-		return outgoing_port;
-	}
-
-
-	public long getLease_time() {
-		return lease_time;
-	}
-
-
-
-	public HashMap<String, StoredConnection> getStoredConnections() {
-		return StoredConnections;
-	}
-
-
-
-	public ArrayList<String[]> getClientTable() {
-		return ClientTable;
-	}
-
-
-
-
-
-
-	public void setLease_time(long lease_time) {
-		this.lease_time = lease_time;
-	}
-
-
-
-	public void setStoredConnections(HashMap<String, StoredConnection> storedConnections) {
-		StoredConnections = storedConnections;
-	}
-
-
-
-	public void setClientTable(ArrayList<String[]> clientTable) {
-		ClientTable = clientTable;
-	}
 
 	private int incomming_port; 
 	private int outgoing_port;
@@ -80,6 +31,7 @@ public class DHCP_Server extends Thread{
 	private HashMap<String, StoredConnection> StoredConnections = new HashMap<String, StoredConnection>(); 
 	// ip address, mac, lease time 
 	private ArrayList<String[]> ClientTable = new ArrayList<String[]>();
+	private ServerLeaseController timeController;
 
 	public DHCP_Server(String config){
 		config = convert_config_path(config);
@@ -88,6 +40,7 @@ public class DHCP_Server extends Thread{
 
 		// for a clean shutdown 
 		setDaemon(true);
+		timeController = new ServerLeaseController(this, this.StoredConnections, this.ClientTable);
 
 	}
 
@@ -95,6 +48,7 @@ public class DHCP_Server extends Thread{
 
 	public void run(){
 		ExecutorService executor = Executors.newFixedThreadPool(this.max_connections);
+		timeController.start();
 
 		//		public static void main(String args[]) throws Exception {
 		//			 -		data = sendData.getBytes();
@@ -311,12 +265,58 @@ public class DHCP_Server extends Thread{
 	public void refreshClientTable(byte[] ipAddress, byte[] mac, long endTime){
 		String[] tableEntry = getByIpAddress(ipAddress);
 		if (tableEntry != null){
-			tableEntry[3] = String.valueOf(endTime); 
+			tableEntry[2] = String.valueOf(endTime); 
 		}
 		else {
 			String[] entry = { String.valueOf(DHCPHelper.byte_to_long(ipAddress)), Arrays.toString(mac), String.valueOf(endTime)};
 			ClientTable.add(entry);
 		}
+	}
+	
+	public int getIncommingPort() {
+		return incomming_port;
+	}
+
+	public int getOutgoingPort() {
+		return outgoing_port;
+	}
+
+
+	public long getLease_time() {
+		return lease_time;
+	}
+
+
+
+	public HashMap<String, StoredConnection> getStoredConnections() {
+		return StoredConnections;
+	}
+
+
+
+	public ArrayList<String[]> getClientTable() {
+		return ClientTable;
+	}
+
+
+
+
+
+
+	public void setLease_time(long lease_time) {
+		this.lease_time = lease_time;
+	}
+
+
+
+	public void setStoredConnections(HashMap<String, StoredConnection> storedConnections) {
+		StoredConnections = storedConnections;
+	}
+
+
+
+	public void setClientTable(ArrayList<String[]> clientTable) {
+		ClientTable = clientTable;
 	}
 
 }

@@ -15,7 +15,7 @@ import DHCPServer.DHCP_Server;
 
 
 public class DHCP_main {
-	static boolean IsClient = true; 
+	static boolean IsClient = false; 
 	public static void main(String args[]) throws Exception , FileNotFoundException{
 //		
 //		// get the mac adddress from the computer 
@@ -48,7 +48,7 @@ public class DHCP_main {
 			System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
 			
 		} else {
-			DHCP_Server server = new DHCP_Server("server.conf");
+			DHCP_Server server = new DHCP_Server("/server.conf");
 			server.start();
 			while (true) {
 				Thread.sleep(10000);

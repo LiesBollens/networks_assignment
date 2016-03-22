@@ -15,10 +15,10 @@ import DHCPServer.DHCP_Server;
 
 
 public class DHCP_main {
-	static boolean IsClient = false; 
+	static boolean IsClient = true; 
 	public static void main(String args[]) throws Exception , FileNotFoundException{
 //		
-//		// get the mac adddress from the computer 
+//		// code to be executed when running as a client
 		if (IsClient){
 		
 			byte[] macAddress = null;
@@ -40,15 +40,17 @@ public class DHCP_main {
 			macAddress = network.getHardwareAddress(); 
 			
 	        }
-	        
-	        System.out.println(macAddress);
 			
-			DHCP_Client client = new DHCP_Client("172.20.10.2", 1234, 1234, macAddress);
+	        // create a new DHCP client 
+			DHCP_Client client = new DHCP_Client("192.168.2.2", 1238, 1237, macAddress);
 
-			System.out.println("Received IP-address: " + client.execute_DHCP().getHostAddress());		
+			// start the process of getting an IP-address, with renewal when the lease time is up
+			client.DHCP_with_renual();
 			
 		} else {
+			// create a new server, with the configurations from the config file 
 			DHCP_Server server = new DHCP_Server("/server.conf");
+			// start the server 
 			server.start();
 			while (true) {
 				Thread.sleep(10000);

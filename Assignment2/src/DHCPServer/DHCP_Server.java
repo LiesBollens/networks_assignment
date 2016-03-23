@@ -15,8 +15,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
-
 import DHCPShared.DHCPHelper;
 
 import java.util.Properties;
@@ -83,7 +81,6 @@ public class DHCP_Server extends Thread{
 				// let the incoming connection receive the packet 
 				clientConnection.receive(receivePacket);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -92,6 +89,10 @@ public class DHCP_Server extends Thread{
 			// execute this new server proces packet handler 
 			executor.execute(DHCPPacketHandler);
 		}
+
+
+
+
 	}
 
 	// get the stred connection with the given mac string as mac address
@@ -134,7 +135,9 @@ public class DHCP_Server extends Thread{
 	// get the right path from the config file 
 	private String convert_config_path(String config) {
 		URL config_url = getClass().getResource(config);
+		System.out.println(config_url + "config url ");
 		if (config_url != null) {
+			System.out.println(config_url.getPath());
 			return config_url.getPath();
 			
 		}
@@ -143,7 +146,6 @@ public class DHCP_Server extends Thread{
 
 	//  a function to parse the config file 
 	private void parse_config_file(String config_path) {
-		
 		boolean file_load_succesfull = true;
 
 		Properties prop = new Properties();

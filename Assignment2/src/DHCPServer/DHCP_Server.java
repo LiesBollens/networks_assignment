@@ -1,4 +1,4 @@
-package DHCPServer;
+ package DHCPServer;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,17 +35,22 @@ public class DHCP_Server extends Thread{
 
 
 	private HashMap<String, StoredConnection> StoredConnections = new HashMap<String, StoredConnection>(); 
-	// ip address, mac, lease time 
+	// an arraylist containing the ip address, mac, lease time 
 	private ArrayList<String[]> ClientTable = new ArrayList<String[]>();
+	
 	private ServerLeaseController timeController;
 
 	public DHCP_Server(String config){
+		// get the address of the given config path
 		config = convert_config_path(config);
+		// parse the config file to get the needed options 
 		parse_config_file(config);
 		System.out.println(max_connections);
 
 		// for a clean shutdown 
 		setDaemon(true);
+		
+		// get a new controller to control the lease times 
 		timeController = new ServerLeaseController(this, this.StoredConnections, this.ClientTable);
 
 	}
@@ -53,23 +58,16 @@ public class DHCP_Server extends Thread{
 
 
 	public void run(){
+		// create e new thread pool
 		ExecutorService executor = Executors.newFixedThreadPool(this.max_connections);
+		
+		// start the lease controller
 		timeController.start();
-
-		//		public static void main(String args[]) throws Exception {
-		//			 -		data = sendData.getBytes();
-		//			 -		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		//			 -		client_connection.receive(receivePacket);
-		//			 -		InetAddress server_adress = receivePacket.getAddress();
-		//			 -		int port = receivePacket.getPort();
-		//			 -		String returnString = new String(receivePacket.getData());
-		//			 -		System.out.println("From server: " + returnString);
-		//			 -		DatagramPacket sendPacket = new DatagramPacket(data, data.length, server_adress, port);
-		//			 -		client_connection.send(sendPacket);
-		//			 -
-		//			 -	}
+		
+		// create a new client connection 
 		DatagramSocket clientConnection = null;
 
+		// create a new client connection on the incoming port 
 		try {
 			clientConnection = new DatagramSocket(getIncommingPort());
 		} catch (SocketException e) {
@@ -78,35 +76,43 @@ public class DHCP_Server extends Thread{
 			return;
 		}
 		while(true){
+			// receive a packet 
 			byte[] receiveData = new byte[576];
 			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 			try {
+				// let the incoming connection receive the packet 
 				clientConnection.receive(receivePacket);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+			// create a new server proces thread to handle the received packet
 			Runnable DHCPPacketHandler = new ServerProcessPacket(this, receivePacket, clientConnection);
+			// execute this new server proces packet handler 
 			executor.execute(DHCPPacketHandler);
 		}
 	}
 
-
+	// get the stred connection with the given mac string as mac address
 	StoredConnection getConnection(String mac){
 		return StoredConnections.get(mac); 
 	}
 
+	// get the stored connection with the given mac address 
 	StoredConnection getConnection(byte[] mac){
 		String key = Arrays.toString(mac);
 		System.out.println(StoredConnections);
 		return StoredConnections.get(key);
 	}
 
+	// add a connection to the stored connections hashmap
 	void addConnection(StoredConnection connection){
 		String key = Arrays.toString(connection.getMacAddress());
 		StoredConnections.put(key, connection); 
 	}
 	
+	// remove a connection from both the stored connections hashmap and the client table 
 	void removeConnection(String mac){
 		StoredConnections.remove(mac);
 		for (int i =0; i < ClientTable.size(); i++){
@@ -125,7 +131,7 @@ public class DHCP_Server extends Thread{
 	
 
 
-
+	// get the right path from the config file 
 	private String convert_config_path(String config) {
 		URL config_url = getClass().getResource(config);
 		if (config_url != null) {
@@ -135,6 +141,7 @@ public class DHCP_Server extends Thread{
 		return config;
 	}
 
+	//  a function to parse the config file 
 	private void parse_config_file(String config_path) {
 		
 		boolean file_load_succesfull = true;
@@ -156,7 +163,7 @@ public class DHCP_Server extends Thread{
 		String inc_p = null;
 		String out_p = null;
 		
-
+		// get all the properties 
 		if (file_load_succesfull) {
 			max_conn = prop.getProperty("max_connections");
 			start_addr = prop.getProperty("ip_table_start");
@@ -236,10 +243,15 @@ public class DHCP_Server extends Thread{
 		}
 	}
 	
+	// a function to get the next available ip address 
 	public byte[] get_next_available_ip() {
+		// loop through all the available ip addresses 
 		for (long ip = ip_table_start; ip < ip_table_end; ip++) {
 			String temp_ip = String.valueOf(ip);
 			boolean in_table = false;
+			
+			// check if the ip address already exists in the table, 
+			// meaning that the ip address has been leased to a client 
 			for (int i = 0; i < this.ClientTable.size(); i++) {
 				if (this.ClientTable.get(i)[0].equals(temp_ip)) {
 					in_table = true;
@@ -254,8 +266,10 @@ public class DHCP_Server extends Thread{
 		return null;
 	}
 	
+	// return the entry from the client table with the given ip address 
 	public String[] getByIpAddress(byte[] ip){
 		String ipAddress = String.valueOf(DHCPHelper.byte_to_long(ip));
+		// loop through the client table 
 		for (int i = 0; i < ClientTable.size(); i++){
 			if ( this.ClientTable.get(i)[0].equals(ipAddress)){
 				return this.ClientTable.get(i);
@@ -266,12 +280,17 @@ public class DHCP_Server extends Thread{
 		
 	}
 	
+	// refresh the client table 
 	public void refreshClientTable(byte[] ipAddress, byte[] mac, long endTime){
+		// get the antry from the client table with the given ip address 
 		String[] tableEntry = getByIpAddress(ipAddress);
+		
+		// if there is an entry, update the end time
 		if (tableEntry != null){
 			tableEntry[2] = String.valueOf(endTime); 
 		}
 		else {
+			// if there is no entry, create a new entry and add it to the table 
 			String[] entry = { String.valueOf(DHCPHelper.byte_to_long(ipAddress)), Arrays.toString(mac), String.valueOf(endTime)};
 			ClientTable.add(entry);
 		}

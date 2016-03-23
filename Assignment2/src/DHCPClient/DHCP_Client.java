@@ -233,39 +233,62 @@ public class DHCP_Client {
 		return receivePacket;
 	}
 
-
+	// a functin to parse a DHCP offer 
 	private void parse_DHCP_offer(DatagramPacket offer) throws UnknownHostException{
 		if (offer == null){
 			return ;
 		}
+		
+		// get the data
 		byte[] DHCPData = offer.getData();
+		
+		// parse the general data
 		parse_general_data(DHCPData);
+		// get the received ip address
 		receivedIpAddress = Arrays.copyOfRange(DHCPData, 16, 20);
+		// get the server ip address
 		serverIpAddress = Arrays.copyOfRange(DHCPData, 20, 24);
+		
+		// print it out
 		DHCPReceivedAddress = InetAddress.getByAddress(receivedIpAddress);
 		System.out.println(DHCPReceivedAddress.getHostAddress() + " received ip address");
 		DHCPServerAddress = InetAddress.getByAddress(serverIpAddress);
 		System.out.println(DHCPServerAddress.getHostAddress() + " server ip address ");
+		
+		// check if the offer came from the right server ( = the server we sent a request to ) 
 		if (serverIdentifierAddress != null && ! DHCPServerAddress.equals(serverIdentifierAddress)){
 			throw new UnknownHostException("The received ip adresses in the DHCP packet and in the options do not match.");
 		}
 	}
 
+	// a function to parse some general data 
 	private void parse_general_data(byte[] DHCPData)
 			throws UnknownHostException {
+		// get all the options from the received packet
 		byte[] options = Arrays.copyOfRange(DHCPData, 236, DHCPData.length);
+		
+		// if the options only contain the magic cookie, return
 		if (! Arrays.equals(Arrays.copyOf(options, 4), MAGIC_COOKIE)){
 			return ;
 		}
 		int index = 4;
 		while (true){
+			
+			// nb 255 is the end option, so we can stop parsing
 			if (options[index] == (byte) 255){
 				break;
 			}
+			// get the number of the option
 			byte optionNb = options[index];
+			// get the length of the option
 			int optionLength = (int) options[index + 1] & 0xFF;
+			// get the contents
 			byte[] optionContents = Arrays.copyOfRange(options, index + 2, index + 2 + optionLength);
+			
+			// parse this option
 			parse_option(optionNb, optionLength, optionContents);
+			
+			// go to the next one 
 			index+= 2 + optionLength;
 		}
 	}
@@ -305,117 +328,20 @@ public class DHCP_Client {
 		}
 	}
 
+	// a function to check if the given mac is a valid mac address
 	private boolean is_valid_mac(DatagramPacket packet){
 		if (packet == null){
 			return false;
 		}
+		
+		// get the received data
 		byte[] rawData = packet.getData();
+		// extract the mac address from it 
 		byte[] possibleMac = Arrays.copyOfRange(rawData, 28, 44);
 		return Arrays.equals(MAC, possibleMac);
 	}
 
-	//	public byte[] DHCP_request(){
-	//		byte[] op = {(byte) 0x1};
-	//		byte[] htype = {(byte) 0x1};
-	//		byte[] hlen = {(byte) 0x6};
-	//		byte[] hops = {(byte) 0x0};
-	//		byte[] xid = {(byte) 0x11, (byte) 0x22, (byte) 0x11, (byte) 0x22};
-	//		byte[] secs = {(byte) 0x0, (byte) 0x0 };
-	//		byte[] flags = {(byte) 0x0, (byte) 0x0};
-	//		byte[] ciaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		byte[] yiaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		byte[] siaddr = serverIpAddress;
-	//		byte[] giaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		byte[] chaddr = MAC;
-	//		byte[] sname = new byte[64];
-	//		Arrays.fill(sname, (byte) 0 );
-	//		byte[] file = new byte[128];
-	//		Arrays.fill(file, (byte) 0 );
-	//
-	//		byte[] option_msg_type = { (byte) 53, (byte) 1, (byte) 3};// DCHP discover request, # 53
-	//		byte[] option_requested_ip_one = {(byte) 50, (byte) 4};
-	//		byte[] option_requested_ip = array_concatenate(option_requested_ip_one, receivedIpAddress); // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
-	//		byte[] option_server_ip_one = {(byte) 54, (byte) 4};
-	//		byte[] option_server_ip = array_concatenate(option_server_ip_one, serverIpAddress);
-	//		byte[] option_end = { (byte) 255};
-	//
-	//		// return one big byte array, containing all the above 
-	//		byte[] dhcp_discover_packet = array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE, option_msg_type, option_requested_ip, option_server_ip, option_end); 
-	//		return dhcp_discover_packet; 
-	//	}
-	//
-	//	public byte[] DHCP_discover(){
-	//		// 1 octet, message operation code/message type
-	//		// 1 = BOOTREQUEST, 2 = BOOTREPLY
-	//		byte[] op = {(byte) 0x1};
-	//		
-	//		// 1 byte, hardware address type
-	//		byte[] htype = {(byte) 0x1};
-	//		
-	//		// 1 byte, hardware address length
-	//		byte[] hlen = {(byte) 0x6};
-	//		
-	//		// 1byte, client sets to zero
-	//		byte[] hops = {(byte) 0x0};
-	//		
-	//		// 4 bytes, Transaction ID, a random number chosen by the
-	//        //client, used by the client and server to associate
-	//        //messages and responses between a client and a
-	//        //server.
-	//		byte[] xid = {(byte) 0x11, (byte) 0x22, (byte) 0x11, (byte) 0x22};
-	//		
-	//		// 2 bytes, 
-	//		//Filled in by client, seconds elapsed since client
-	//        //began address acquisition or renewal process.
-	//		byte[] secs = {(byte) 0x0, (byte) 0x0 };
-	//		
-	//		// Z bytes, flags
-	//		byte[] flags = {(byte) 0x0, (byte) 0x0};
-	//		
-	//		// 4 bytes
-	//		// client ip address
-	//		byte[] ciaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		
-	//		// 4 bytes
-	//		// client IP address
-	//		byte[] yiaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		
-	//		// 4 bytes
-	//		// IP address of next server to use in bootstrap;
-	//        //returned in DHCPOFFER, DHCPACK by server.
-	//		byte[] siaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		
-	//		// 4 bytes
-	//		// relay agent IP address, used in booting
-	//		// via a relay agent 
-	//		byte[] giaddr = {(byte) 0x0,(byte) 0x0,(byte) 0x0,(byte) 0x0};
-	//		
-	//		// 16 bytes, client hardware ( = MAC) address
-	//		byte[] chaddr = MAC;
-	//		
-	//		// 64 bytes
-	//		// optional server host name, null terminated string
-	//		byte[] sname = new byte[64];
-	//		Arrays.fill(sname, (byte) 0 );
-	//		
-	//		// 128 bytes
-	//		// boot file name, null terminated string.
-	//		//"generic" name or null in DHCPDISCOVER, fully qualified
-	//        //directory-path name in DHCPOFFER.
-	//		byte[] file = new byte[128];
-	//		Arrays.fill(file, (byte) 0 );
-	//
-	//		// the message type 
-	//		byte[] option_msg_type = { (byte) 53, (byte) 1, (byte) 1};// DCHP discover request, # 53
-	//		
-	//		// optional data 
-	//		byte[] option_ ={(byte) 55, (byte) 4, (byte) 1, (byte) 3, (byte) 15, (byte) 6, (byte) 255}; // parameter request list, list # 55, then request subnet mask(1), router(3), domain name(15), domain name server(6)
-	//
-	//		// return one big byte array, containing all the above 
-	//		byte[] dhcp_discover_packet = array_concatenate(op, htype, hlen, hops, xid, secs, flags, ciaddr, yiaddr, siaddr, giaddr, chaddr, sname, file, MAGIC_COOKIE, option_msg_type, option_); 
-	//		return dhcp_discover_packet; 
-	//	}
-	//	
+	
 	// a function to create one big array from all the given arrays
 	byte[]  array_concatenate(byte[]... array){
 		int total_length = 0;
@@ -524,11 +450,15 @@ public class DHCP_Client {
 	}
 
 
+	// a function to set the client connection
 	public void setClient_connection() throws SocketException {
+		// create a new outgoing connection
 		this.client_connection_outgoing = new DatagramSocket();
+		// in case only one port was given, the incoming connectiont is equal to the outgoing
 		if ( this.portIncoming == this.portOutgoing){
 			this.client_connection_incoming = this.client_connection_outgoing; 
 		}
+		// create a new incoming connection 
 		else {
 			this.client_connection_incoming = new DatagramSocket(this.portIncoming); 
 		}

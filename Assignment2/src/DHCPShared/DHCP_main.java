@@ -20,7 +20,7 @@ public class DHCP_main {
 //		
 //		// code to be executed when running as a client
 		if (IsClient){
-		
+			
 			byte[] macAddress = null;
 			Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 	        while(networkInterfaces.hasMoreElements())
@@ -42,7 +42,7 @@ public class DHCP_main {
 	        }
 			
 	        // create a new DHCP client 
-			DHCP_Client client = new DHCP_Client("192.168.2.2", 1238, 1237, macAddress);
+			DHCP_Client client = new DHCP_Client("172.20.10.2", 1238, 1237, macAddress);
 
 			// start the process of getting an IP-address, with renewal when the lease time is up
 			client.DHCP_with_renual();

@@ -15,8 +15,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
-
 import DHCPShared.DHCPHelper;
 
 import java.util.Properties;
@@ -83,12 +81,15 @@ public class DHCP_Server extends Thread{
 			try {
 				clientConnection.receive(receivePacket);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			Runnable DHCPPacketHandler = new ServerProcessPacket(this, receivePacket, clientConnection);
 			executor.execute(DHCPPacketHandler);
 		}
+
+
+
+
 	}
 
 
@@ -128,7 +129,9 @@ public class DHCP_Server extends Thread{
 
 	private String convert_config_path(String config) {
 		URL config_url = getClass().getResource(config);
+		System.out.println(config_url + "config url ");
 		if (config_url != null) {
+			System.out.println(config_url.getPath());
 			return config_url.getPath();
 			
 		}
@@ -136,7 +139,6 @@ public class DHCP_Server extends Thread{
 	}
 
 	private void parse_config_file(String config_path) {
-		
 		boolean file_load_succesfull = true;
 
 		Properties prop = new Properties();
